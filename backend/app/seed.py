@@ -11,6 +11,8 @@ def init_db():
     CREATE TABLE IF NOT EXISTS trips(id INTEGER PRIMARY KEY, label TEXT, distance_km REAL, slow_min REAL, night INTEGER);
     CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY, value TEXT);
     CREATE TABLE IF NOT EXISTS calc_runs(id INTEGER PRIMARY KEY, kind TEXT, trip_id INTEGER, input_json TEXT, result_json TEXT, created_at TEXT);
+    CREATE TABLE IF NOT EXISTS pulse_rules(id INTEGER PRIMARY KEY, name TEXT, enabled_flag INTEGER);
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_pulse_rules_enabled ON pulse_rules(enabled_flag) WHERE enabled_flag IS NOT NULL;
     """)
     if conn.execute("SELECT COUNT(*) c FROM tariff").fetchone()["c"] == 0:
         conn.execute("INSERT INTO tariff(start_price,start_include_km,per_km,per_slow_min,night_factor) VALUES (11,3,2.5,0.8,1.2)")
@@ -20,5 +22,9 @@ def init_db():
         r = calc_fare(5, 2, False, TARIFF)
         conn.execute("INSERT INTO calc_runs(kind,trip_id,input_json,result_json,created_at) VALUES ('fare',1,?,?,datetime('now'))",
             (json.dumps({"distance_km":5,"slow_min":2,"night":False}), json.dumps(r)))
+        conn.commit()
+    # 老库迁移：补一条默认（停用）脉冲规则，是否启用由用户在规则页决定
+    if conn.execute("SELECT COUNT(*) c FROM pulse_rules").fetchone()["c"] == 0:
+        conn.execute("INSERT INTO pulse_rules(name,enabled_flag) VALUES ('标准脉冲（0.5公里/整分钟）',NULL)")
         conn.commit()
     conn.close()

@@ -11,3 +11,6 @@ class CompareRequest(BaseModel):
     distance_km: float = Field(ge=0)
     slow_min: float = Field(ge=0)
     persist: bool = False
+
+class PulseEnabledRequest(BaseModel):
+    enabled: bool
