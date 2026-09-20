@@ -11,6 +11,7 @@ def init_db():
     CREATE TABLE IF NOT EXISTS trips(id INTEGER PRIMARY KEY, label TEXT, distance_km REAL, slow_min REAL, night INTEGER);
     CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY, value TEXT);
     CREATE TABLE IF NOT EXISTS calc_runs(id INTEGER PRIMARY KEY, kind TEXT, trip_id INTEGER, input_json TEXT, result_json TEXT, created_at TEXT);
+    CREATE TABLE IF NOT EXISTS pulse_rules(id INTEGER PRIMARY KEY, distance_step_km REAL NOT NULL, slow_step_min REAL NOT NULL, enabled INTEGER NOT NULL DEFAULT 0, created_at TEXT);
     """)
     if conn.execute("SELECT COUNT(*) c FROM tariff").fetchone()["c"] == 0:
         conn.execute("INSERT INTO tariff(start_price,start_include_km,per_km,per_slow_min,night_factor) VALUES (11,3,2.5,0.8,1.2)")
@@ -20,5 +21,9 @@ def init_db():
         r = calc_fare(5, 2, False, TARIFF)
         conn.execute("INSERT INTO calc_runs(kind,trip_id,input_json,result_json,created_at) VALUES ('fare',1,?,?,datetime('now'))",
             (json.dumps({"distance_km":5,"slow_min":2,"night":False}), json.dumps(r)))
+        conn.commit()
+    if conn.execute("SELECT COUNT(*) c FROM pulse_rules").fetchone()["c"] == 0:
+        # 默认脉冲规则：0.5 公里一跳、整分钟一跳；默认停用，回到连续计价
+        conn.execute("INSERT INTO pulse_rules(distance_step_km,slow_step_min,enabled,created_at) VALUES (0.5,1,0,datetime('now'))")
         conn.commit()
     conn.close()

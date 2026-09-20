@@ -14,6 +14,10 @@ onMounted(load); watch(() => route.params.id, load)
 <template>
   <div class="page" v-if="trip"><h1>{{ trip.label }}</h1>
     <p class="hero-num">¥{{ fare?.total }}</p>
-    <p>起步 {{ fare?.start }} · 里程 {{ fare?.mileage }} · 低速 {{ fare?.slow_fee }}</p>
+    <p>起步 {{ fare?.start }} · 里程 {{ fare?.mileage }} · 低速 {{ fare?.slow_fee }} · 应付 ¥{{ fare?.total }}</p>
+    <div v-if="fare?.pulse_enabled" class="panel">
+      <p>脉冲计价（只读试算）：里程 {{ fare.distance_hops }} 跳 × ¥{{ fare.per_hop_mileage }} ·
+         低速 {{ fare.slow_hops }} 跳 × ¥{{ fare.per_hop_slow }}</p>
+    </div>
   </div>
 </template>
